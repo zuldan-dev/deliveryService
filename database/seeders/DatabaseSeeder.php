@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -12,6 +11,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(UsersRolesSeeder::class);
+        if (in_array(getenv('APP_ENV'), config('app.seeder_environments'))) {
+            $this->call([
+            UsersRolesSeeder::class,
+            RestaurantsSeeder::class,
+            DishesSeeder::class,
+            DriversSeeder::class,
+            ]);
+        }
     }
 }

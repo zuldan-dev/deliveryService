@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Enums\UserRoleEnum;
 use App\Models\User;
+use App\Rules\UserValidationRules;
 use App\Support\CommandMessages;
 use Illuminate\Console\Command;
 use Illuminate\Database\QueryException;
@@ -70,13 +71,10 @@ class CreateSuperAdmin extends Command
     {
         return Validator::make(
             [
-            'email' => $email,
-            'password' => $password,
+                'email' => $email,
+                'password' => $password,
             ],
-            [
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6',
-            ]
+            UserValidationRules::createRules()
         );
     }
 }

@@ -11,9 +11,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Creating roles and test users for all environments
+        $this->call(UsersRolesSeeder::class);
+
         if (in_array(getenv('APP_ENV'), config('app.seeder_environments'))) {
             $this->call([
-                UsersRolesSeeder::class,
                 RestaurantsSeeder::class,
                 DishesSeeder::class,
                 DriversSeeder::class,

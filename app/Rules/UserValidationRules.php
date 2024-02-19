@@ -16,6 +16,10 @@ class UserValidationRules
         ];
     }
 
+    /**
+     * Login user rules
+     * @return array
+     */
     public static function loginRules(): array
     {
         return [

@@ -2,31 +2,34 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Requests\DriverRequest;
+use App\Models\Driver;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
+use Backpack\CRUD\app\Http\Controllers\Operations\{ListOperation,CreateOperation,UpdateOperation,DeleteOperation};
+use Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+use Backpack\CRUD\app\Library\CrudPanel\CrudPanel;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 
 /**
  * Class DriverCrudController
  * @package App\Http\Controllers\Admin
- * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
+ * @property-read CrudPanel $crud
  */
 class DriverCrudController extends CrudController
 {
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+    use ListOperation;
+    use CreateOperation;
+    use UpdateOperation;
+    use DeleteOperation;
+    use ShowOperation;
 
     /**
      * Configure the CrudPanel object. Apply settings to all operations.
      *
      * @return void
      */
-    public function setup()
+    public function setup(): void
     {
-        CRUD::setModel(\App\Models\Driver::class);
+        CRUD::setModel(Driver::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/driver');
         CRUD::setEntityNameStrings('driver', 'drivers');
     }
@@ -37,14 +40,23 @@ class DriverCrudController extends CrudController
      * @see  https://backpackforlaravel.com/docs/crud-operation-list-entries
      * @return void
      */
-    protected function setupListOperation()
+    protected function setupListOperation(): void
     {
-        CRUD::setFromDb(); // set columns from db columns.
-
-        /**
-         * Columns can be defined using the fluent syntax:
-         * - CRUD::column('price')->type('number');
-         */
+        $this->crud->column('id')->type('number')->label('ID');
+        $this->crud->column('name')->type('text')->label('Driver Name');
+        $this->crud->column('car')->type('text')->label('Car Model');
+        $this->crud->column('contacts')->type('text')->label('Contacts')->orderable(false);
+        $this->crud->column([
+            'name' => 'revenue',
+            'label' => 'Driver Income',
+            'type' => 'number',
+            'prefix' => '$',
+            'decimals' => 2,
+            'orderable' => false,
+        ]);
+        $this->crud->column('created_at')->type('datetime')->label('Created')->orderable(false);
+        $this->crud->column('updated_at')->type('datetime')->label('Updated')->orderable(false);
+        $this->crud->orderBy('id');
     }
 
     /**
@@ -53,17 +65,18 @@ class DriverCrudController extends CrudController
      * @see https://backpackforlaravel.com/docs/crud-operation-create
      * @return void
      */
-    protected function setupCreateOperation()
+    protected function setupCreateOperation(): void
     {
         CRUD::setValidation([
-            // 'name' => 'required|min:2',
+            'name' => 'required|min:2',
+            'car' => 'required|min:2',
+            'revenue' => 'required|numeric',
         ]);
-        CRUD::setFromDb(); // set fields from db columns.
-
-        /**
-         * Fields can be defined using the fluent syntax:
-         * - CRUD::field('price')->type('number');
-         */
+        $this->crud->field('name')->type('text')->label('Driver Name');
+        $this->crud->field('car')->type('text')->label('Car Model');
+        $this->crud->field('contacts')->type('textarea')->label('Contacts');
+        $this->crud->field('revenue')->type('number')
+            ->label('Driver Income')->prefix('$')->default('15.00');
     }
 
     /**
@@ -72,7 +85,7 @@ class DriverCrudController extends CrudController
      * @see https://backpackforlaravel.com/docs/crud-operation-update
      * @return void
      */
-    protected function setupUpdateOperation()
+    protected function setupUpdateOperation(): void
     {
         $this->setupCreateOperation();
     }

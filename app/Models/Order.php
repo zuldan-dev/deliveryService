@@ -5,6 +5,9 @@ namespace App\Models;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -25,5 +28,31 @@ class Order extends Model
 
     protected $table = 'orders';
 
-    protected $fillable = ['user_id', 'status'];
+    protected $fillable = ['user_id', 'status', 'driver_id'];
+
+    /**
+     * @return HasOne
+     */
+    public function user(): HasOne
+    {
+        return $this->hasOne(User::class, 'id', 'user_id');
+    }
+
+    /**
+     * @return BelongsToMany
+     */
+    public function dishes(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Dish::class,
+            'orders_dishes',
+            'order_id',
+            'dish_id'
+        );
+    }
+
+    public function driver(): BelongsTo
+    {
+        return $this->belongsTo(Driver::class, 'driver_id', 'id');
+    }
 }

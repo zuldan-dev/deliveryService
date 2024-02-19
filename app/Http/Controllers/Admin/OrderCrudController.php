@@ -2,33 +2,40 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Requests\OrderRequest;
+use App\Enums\OrderStatusEnum;
+use App\Models\Order;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
+use Backpack\CRUD\app\Http\Controllers\Operations\{ListOperation,CreateOperation,UpdateOperation,DeleteOperation};
+use Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+use Backpack\CRUD\app\Library\CrudPanel\CrudPanel;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 
 /**
  * Class OrderCrudController
  * @package App\Http\Controllers\Admin
- * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
+ * @property-read CrudPanel $crud
  */
 class OrderCrudController extends CrudController
 {
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+    use ListOperation;
+    use CreateOperation;
+    use UpdateOperation;
+    use DeleteOperation;
+    use ShowOperation;
 
     /**
      * Configure the CrudPanel object. Apply settings to all operations.
      *
      * @return void
      */
-    public function setup()
+    public function setup(): void
     {
-        CRUD::setModel(\App\Models\Order::class);
+        CRUD::setModel(Order::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/order');
         CRUD::setEntityNameStrings('order', 'orders');
+        $this->crud->removeButton('create');
+        $this->crud->denyAccess('create');
+        $this->crud->denyAccess('delete');
     }
 
     /**
@@ -37,33 +44,47 @@ class OrderCrudController extends CrudController
      * @see  https://backpackforlaravel.com/docs/crud-operation-list-entries
      * @return void
      */
-    protected function setupListOperation()
+    protected function setupListOperation(): void
     {
-        CRUD::setFromDb(); // set columns from db columns.
+        $this->setupColumns();
+        $this->crud->column([
+            'name' => 'dishes',
+            'label' => 'Dishes',
+            'type' => 'closure',
+            'escaped' => false,
+            'function' => function ($entry) {
+                $count = $entry->dishes->count();
+                $url = backpack_url('order/' . $entry->id . '/show');
 
-        /**
-         * Columns can be defined using the fluent syntax:
-         * - CRUD::column('price')->type('number');
-         */
+                return '<a href="' . $url . '">' . $count . ' dishes</a>';
+            },
+        ])->after('driver_id');
+        $this->crud->orderBy('id');
     }
 
     /**
-     * Define what happens when the Create operation is loaded.
+     * Define what happens when the Show operation is loaded.
      *
-     * @see https://backpackforlaravel.com/docs/crud-operation-create
      * @return void
      */
-    protected function setupCreateOperation()
+    protected function setupShowOperation(): void
     {
-        CRUD::setValidation([
-            // 'name' => 'required|min:2',
-        ]);
-        CRUD::setFromDb(); // set fields from db columns.
+        $this->setupColumns();
+        $this->crud->column([
+            'name' => 'dishes',
+            'label' => 'Dishes',
+            'type' => 'closure',
+            'escaped' => false,
+            'function' => function ($entry) {
+                $dishes = $entry->dishes;
 
-        /**
-         * Fields can be defined using the fluent syntax:
-         * - CRUD::field('price')->type('number');
-         */
+                if ($dishes->isNotEmpty()) {
+                    return $dishes->pluck('name')->implode(',<br/>');
+                }
+
+                return '';
+            },
+        ])->after('address');
     }
 
     /**
@@ -72,8 +93,54 @@ class OrderCrudController extends CrudController
      * @see https://backpackforlaravel.com/docs/crud-operation-update
      * @return void
      */
-    protected function setupUpdateOperation()
+    protected function setupUpdateOperation(): void
     {
-        $this->setupCreateOperation();
+        $order = Order::findOrFail(request()->route('id'));
+        $attributes = in_array($order->status, [OrderStatusEnum::canceled->name, OrderStatusEnum::completed->name])
+            ? ['disabled' => 'disabled'] : [];
+
+        $this->crud->field([
+            'name' => 'driver_id',
+            'label' => 'Drivers',
+            'type' => 'select',
+            'entity' => 'driver',
+            'attribute' => 'name',
+            'model' => 'App\Models\Driver',
+            'attributes' => $attributes,
+        ]);
+        $this->crud->field([
+            'name' => 'status',
+            'label' => 'Status',
+            'type' => 'select_from_array',
+            'options' => OrderStatusEnum::getArray([OrderStatusEnum::pending->name]),
+        ]);
+    }
+
+    /**
+     * Common columns definition
+     * @return void
+     */
+    private function setupColumns(): void
+    {
+        $this->crud->column('id')->type('number')->label('ID');
+        $this->crud->column([
+            'name' => 'user_id',
+            'label' => 'User',
+            'type' => 'select',
+            'entity' => 'user',
+            'attribute' => 'name',
+            'model' => 'App\Models\User',
+        ]);
+        $this->crud->column([
+            'name' => 'driver_id',
+            'label' => 'Driver',
+            'type' => 'select',
+            'entity' => 'driver',
+            'attribute' => 'name',
+            'model' => 'App\Models\Driver',
+        ]);
+        $this->crud->column('status')->type('text')->label('Status');
+        $this->crud->column('created_at')->type('datetime')->label('Created')->orderable(false);
+        $this->crud->column('updated_at')->type('datetime')->label('Updated')->orderable(false);
     }
 }

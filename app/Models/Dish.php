@@ -5,6 +5,7 @@ namespace App\Models;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -16,6 +17,7 @@ use Illuminate\Support\Carbon;
  * @property float $price
  * @property Carbon $created_at
  * @property Carbon $updated_at
+ * @property Restaurant[] $restaurants
  */
 class Dish extends Model
 {
@@ -25,4 +27,17 @@ class Dish extends Model
     protected $table = 'dishes';
 
     protected $fillable = ['name', 'price'];
+
+    /**
+     * @return BelongsToMany
+     */
+    public function restaurants(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Restaurant::class,
+            RestaurantDish::class,
+            'dish_id',
+            'restaurant_id',
+        );
+    }
 }

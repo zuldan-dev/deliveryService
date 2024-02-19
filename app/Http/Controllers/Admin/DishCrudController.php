@@ -2,31 +2,34 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Requests\DishRequest;
+use App\Models\Dish;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
+use Backpack\CRUD\app\Http\Controllers\Operations\{ListOperation,CreateOperation,UpdateOperation,DeleteOperation};
+use Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+use Backpack\CRUD\app\Library\CrudPanel\CrudPanel;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 
 /**
  * Class DishCrudController
  * @package App\Http\Controllers\Admin
- * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
+ * @property-read CrudPanel $crud
  */
 class DishCrudController extends CrudController
 {
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+    use ListOperation;
+    use CreateOperation;
+    use UpdateOperation;
+    use DeleteOperation;
+    use ShowOperation;
 
     /**
      * Configure the CrudPanel object. Apply settings to all operations.
      *
      * @return void
      */
-    public function setup()
+    public function setup(): void
     {
-        CRUD::setModel(\App\Models\Dish::class);
+        CRUD::setModel(Dish::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/dish');
         CRUD::setEntityNameStrings('dish', 'dishes');
     }
@@ -37,14 +40,47 @@ class DishCrudController extends CrudController
      * @see  https://backpackforlaravel.com/docs/crud-operation-list-entries
      * @return void
      */
-    protected function setupListOperation()
+    protected function setupListOperation(): void
     {
-        CRUD::setFromDb(); // set columns from db columns.
+        $this->setupColumns();
+        $this->crud->column([
+            'name' => 'restaurants',
+            'label' => 'Restaurants',
+            'type' => 'closure',
+            'escaped' => false,
+            'function' => function ($entry) {
+                $count = $entry->restaurants->count();
+                $url = backpack_url('dish/' . $entry->id . '/show');
 
-        /**
-         * Columns can be defined using the fluent syntax:
-         * - CRUD::column('price')->type('number');
-         */
+                return '<a href="' . $url . '">In ' . $count . ' restaurants</a>';
+            },
+        ])->after('price');
+        $this->crud->orderBy('id');
+    }
+
+    /**
+     * Define what happens when the Show operation is loaded.
+     *
+     * @return void
+     */
+    protected function setupShowOperation(): void
+    {
+        $this->setupColumns();
+        $this->crud->column([
+            'name' => 'restaurants',
+            'label' => 'Restaurants',
+            'type' => 'closure',
+            'escaped' => false,
+            'function' => function ($entry) {
+                $restaurants = $entry->restaurants;
+
+                if ($restaurants->isNotEmpty()) {
+                    return $restaurants->pluck('name')->implode(',<br/>');
+                }
+
+                return '';
+            },
+        ])->after('price');
     }
 
     /**
@@ -53,17 +89,24 @@ class DishCrudController extends CrudController
      * @see https://backpackforlaravel.com/docs/crud-operation-create
      * @return void
      */
-    protected function setupCreateOperation()
+    protected function setupCreateOperation(): void
     {
-        CRUD::setValidation([
-            // 'name' => 'required|min:2',
+        $this->crud->setValidation([
+            'name' => 'required|min:3',
+            'price' => 'required|numeric',
         ]);
-        CRUD::setFromDb(); // set fields from db columns.
 
-        /**
-         * Fields can be defined using the fluent syntax:
-         * - CRUD::field('price')->type('number');
-         */
+        $this->crud->field('name')->type('text')->label('Dish Name');
+        $this->crud->field('price')->type('number')->label('Dish Price')->prefix('$');
+        $this->crud->field([
+            'name' => 'restaurants',
+            'label' => 'Restaurants',
+            'type' => 'select_multiple',
+            'entity' => 'restaurants',
+            'attribute' => 'name',
+            'model' => 'App\Models\Restaurant',
+            'pivot' => true,
+        ]);
     }
 
     /**
@@ -72,8 +115,28 @@ class DishCrudController extends CrudController
      * @see https://backpackforlaravel.com/docs/crud-operation-update
      * @return void
      */
-    protected function setupUpdateOperation()
+    protected function setupUpdateOperation(): void
     {
         $this->setupCreateOperation();
+    }
+
+    /**
+     * Common columns definition
+     *
+     * @return void
+     */
+    private function setupColumns(): void
+    {
+        $this->crud->column('id')->type('number')->label('ID');
+        $this->crud->column('name')->type('text')->label('Dish Name');
+        $this->crud->column([
+            'name' => 'price',
+            'label' => 'Dish Price',
+            'type' => 'number',
+            'prefix' => '$',
+            'decimals' => 2,
+        ]);
+        $this->crud->column('created_at')->type('datetime')->label('Created')->orderable(false);
+        $this->crud->column('updated_at')->type('datetime')->label('Updated')->orderable(false);
     }
 }

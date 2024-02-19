@@ -4,20 +4,23 @@ namespace App\Http\Controllers\Admin;
 
 use App\Models\Restaurant;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
+use Backpack\CRUD\app\Http\Controllers\Operations\{ListOperation,CreateOperation,UpdateOperation,DeleteOperation};
+use Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+use Backpack\CRUD\app\Library\CrudPanel\CrudPanel;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 
 /**
  * Class RestaurantCrudController
  * @package App\Http\Controllers\Admin
- * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
+ * @property-read CrudPanel $crud
  */
 class RestaurantCrudController extends CrudController
 {
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+    use ListOperation;
+    use CreateOperation;
+    use UpdateOperation;
+    use DeleteOperation;
+    use ShowOperation;
 
     /**
      * Configure the CrudPanel object. Apply settings to all operations.
@@ -39,12 +42,49 @@ class RestaurantCrudController extends CrudController
      */
     protected function setupListOperation(): void
     {
-        CRUD::setFromDb(); // set columns from db columns.
+        $this->setupColumns();
+        $this->crud->column('address')->type('text')
+            ->label('Restaurant Address')->orderable(false)->after('name');
+        $this->crud->column([
+            'name' => 'dishes',
+            'label' => 'Restaurant Dishes',
+            'type' => 'closure',
+            'escaped' => false,
+            'function' => function ($entry) {
+                $count = $entry->dishes->count();
+                $url = backpack_url('restaurant/' . $entry->id . '/show');
 
-        /**
-         * Columns can be defined using the fluent syntax:
-         * - CRUD::column('price')->type('number');
-         */
+                return '<a href="' . $url . '">' . $count . ' dishes</a>';
+            },
+        ])->after('address');
+        $this->crud->orderBy('id');
+    }
+
+    /**
+     * Define what happens when the Show operation is loaded.
+     *
+     * @return void
+     */
+    protected function setupShowOperation(): void
+    {
+        $this->setupColumns();
+        $this->crud->column('address')->label('Restaurant Address')
+            ->type('textarea')->after('name');
+        $this->crud->column([
+            'name' => 'dishes',
+            'label' => 'Restaurant Dishes',
+            'type' => 'closure',
+            'escaped' => false,
+            'function' => function ($entry) {
+                $dishes = $entry->dishes;
+
+                if ($dishes->isNotEmpty()) {
+                    return $dishes->pluck('name')->implode(',<br/>');
+                }
+
+                return '';
+            },
+        ])->after('address');
     }
 
     /**
@@ -53,17 +93,22 @@ class RestaurantCrudController extends CrudController
      * @see https://backpackforlaravel.com/docs/crud-operation-create
      * @return void
      */
-    protected function setupCreateOperation()
+    protected function setupCreateOperation(): void
     {
-        CRUD::setValidation([
-            // 'name' => 'required|min:2',
+        $this->crud->setValidation([
+            'name' => 'required|min:2',
         ]);
-        CRUD::setFromDb(); // set fields from db columns.
-
-        /**
-         * Fields can be defined using the fluent syntax:
-         * - CRUD::field('price')->type('number');
-         */
+        $this->crud->field('name')->type('text')->label('Restaurant Name');
+        $this->crud->field('address')->type('textarea')->label('Restaurant Address');
+        $this->crud->field([
+            'name' => 'dishes',
+            'label' => 'Restaurant Dishes',
+            'type' => 'select_multiple',
+            'entity' => 'dishes',
+            'attribute' => 'name',
+            'model' => 'App\Models\Dish',
+            'pivot' => true,
+        ]);
     }
 
     /**
@@ -75,5 +120,17 @@ class RestaurantCrudController extends CrudController
     protected function setupUpdateOperation(): void
     {
         $this->setupCreateOperation();
+    }
+
+    /**
+     * Common columns definition
+     * @return void
+     */
+    private function setupColumns(): void
+    {
+        $this->crud->column('id')->type('number')->label('ID');
+        $this->crud->column('name')->type('text')->label('Restaurant Name');
+        $this->crud->column('created_at')->type('datetime')->label('Created')->orderable(false);
+        $this->crud->column('updated_at')->type('datetime')->label('Updated')->orderable(false);
     }
 }

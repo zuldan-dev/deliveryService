@@ -11,8 +11,16 @@ class UserValidationRules
     public static function createRules(): array
     {
         return [
-            'email' => 'required|string|email|unique:users,email',
-            'password' => 'required|string|min:6',
+            'email' => 'required|string|email|max:255|unique:users,email',
+            'password' => 'required|string|min:5|max:255',
+        ];
+    }
+
+    public static function loginRules(): array
+    {
+        return [
+            'email' => 'required|string|email|max:255',
+            'password' => 'required|string|min:5|max:255',
         ];
     }
 }

@@ -56,7 +56,7 @@ class SuperadminCreateCommandTest extends TestCase
             ->expectsOutput(trans('validation.email', ['attribute' => 'email']));
 
         $this->artisan(self::TEST_COMMAND, self::TEST_USERS['incorrect_password'])
-            ->expectsOutput(trans('validation.min.string', ['attribute' => 'password', 'min' => '6']));
+            ->expectsOutput(trans('validation.min.string', ['attribute' => 'password', 'min' => '5']));
     }
 
     /**

@@ -8,7 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\OrderCreateRequest;
 use App\Http\Requests\OrderUpdateStatusRequest;
 use App\Http\Requests\OrderViewStatusRequest;
-use App\Models\Driver;
+use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Support\ApiMessages;
 use Exception;
@@ -44,23 +44,14 @@ class OrderController extends Controller
 
     /**
      * @param OrderViewStatusRequest $request
-     * @return JsonResponse
+     * @return OrderResource|JsonResponse
      */
-    public function statusView(OrderViewStatusRequest $request): JsonResponse
+    public function statusView(OrderViewStatusRequest $request): OrderResource|JsonResponse
     {
         try {
             $order = Order::findOrFail($request->id);
 
-            if ($order->status === OrderStatusEnum::processed->value) {
-                $driver = Driver::findOrFail($order->driver_id);
-
-                return response()->json([
-                    'status' => $order->status,
-                    'driver' => $driver,
-                ], Response::HTTP_OK);
-            }
-
-            return response()->json(['status' => $order->status], Response::HTTP_OK);
+            return new OrderResource($order);
         } catch (Exception $exception) {
             return response()->json(['error' => $exception->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }

@@ -5,12 +5,10 @@ namespace App\Http\Requests;
 use App\Enums\UserRoleEnum;
 use App\Support\ApiMessages;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Exceptions\HttpResponseException;
-use Symfony\Component\HttpFoundation\Response;
 
-class OrderRequest extends FormRequest
+class StatsRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -21,7 +19,7 @@ class OrderRequest extends FormRequest
             return false;
         }
 
-        return $this->user()->hasRole(UserRoleEnum::client->value);
+        return $this->user()->hasRole(UserRoleEnum::superadmin->value);
     }
 
     /**
@@ -34,15 +32,12 @@ class OrderRequest extends FormRequest
     }
 
     /**
-     * @param Validator $validator
-     * @throws HttpResponseException
-     * @return void
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, ValidationRule|array|string>
      */
-    protected function failedValidation(Validator $validator): void
+    public function rules(): array
     {
-        throw new HttpResponseException(response()->json([
-            'message' => ApiMessages::ERROR_VALIDATION,
-            'errors' => $validator->errors(),
-        ], Response::HTTP_UNPROCESSABLE_ENTITY));
+        return [];
     }
 }

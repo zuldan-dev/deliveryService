@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Events\OrderAssigned;
 use App\Events\OrderCreated;
+use App\Listeners\LogOrderAssigned;
 use App\Listeners\LogOrderCreated;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -21,6 +23,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         OrderCreated::class => [
             LogOrderCreated::class,
+        ],
+        OrderAssigned::class => [
+            LogOrderAssigned::class,
         ],
     ];
 

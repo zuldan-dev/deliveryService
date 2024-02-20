@@ -37,6 +37,9 @@ class ApiDishTest extends TestCase
         ],
     ];
 
+    /**
+     * @return void
+     */
     public function setUp(): void
     {
         parent::setUp();
@@ -59,8 +62,8 @@ class ApiDishTest extends TestCase
     {
         $response = $this->getJson(self::DISH_LIST_ROUTE . '?restaurant_id=' . self::RESTAURANTS[0]['id']);
 
-        $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(['dishes']);
-        $this->assertCount(count(self::DISHES), $response->json(['dishes']));
+        $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(['data']);
+        $this->assertCount(count(self::DISHES), $response->json(['data']));
     }
 
     /**
@@ -70,8 +73,8 @@ class ApiDishTest extends TestCase
     public function testApiDishListEmpty(): void
     {
         $response = $this->getJson(self::DISH_LIST_ROUTE . '?restaurant_id=' . self::RESTAURANTS[1]['id']);
-        $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(['dishes']);
-        $this->assertCount(0, $response->json(['dishes']));
+        $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(['data']);
+        $this->assertCount(0, $response->json(['data']));
     }
 
     /**

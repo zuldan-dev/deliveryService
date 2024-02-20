@@ -30,5 +30,5 @@ Route::namespace('App\Http\Controllers\Api')->group(function () {
     Route::middleware('auth:api')->put('/order/status/update', 'OrderController@statusUpdate');
     // Stats
     Route::middleware('auth:api')->get('/stats/average/cost_of_orders', 'StatsController@costOfOrders');
-    Route::middleware('auth:api')->get('/stats/average/amount_by_drivers', 'StatsController@amountByDrivers');
+    Route::middleware('auth:api')->get('/stats/daily/amount_by_drivers', 'StatsController@amountByDrivers');
 });

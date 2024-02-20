@@ -82,7 +82,10 @@ class ApiDishTest extends TestCase
     {
         // Not exists restaurant Id
         $response = $this->getJson(self::DISH_LIST_ROUTE . '?restaurant_id=' . self::WRONG_RESTAURANT_ID);
-        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR)->assertJsonStructure(['error']);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
+            ->assertJsonFragment([
+                'restaurant_id' => [trans('validation.exists', ['attribute' => 'restaurant id'])],
+            ]);
 
         // Not valid restaurant Id
         $response = $this->getJson(self::DISH_LIST_ROUTE . '?restaurant_id=aaa');

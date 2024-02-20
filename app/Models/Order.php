@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
  * Columns in the table 'orders'
  * @property integer $id
  * @property integer $user_id
+ * @property integer $driver_id
  * @property string $status
  * @property Carbon $created_at
  * @property Carbon $updated_at

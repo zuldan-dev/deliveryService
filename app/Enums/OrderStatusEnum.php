@@ -4,10 +4,10 @@ namespace App\Enums;
 
 enum OrderStatusEnum: string
 {
-    case pending = 'Pending';
-    case processed = 'Processed';
-    case completed = 'Completed';
-    case canceled = 'Canceled';
+    case pending = 'pending';
+    case processed = 'processed';
+    case completed = 'completed';
+    case canceled = 'canceled';
 
     /**
      * Converts enum to associative array

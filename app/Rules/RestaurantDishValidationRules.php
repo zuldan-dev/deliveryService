@@ -11,7 +11,7 @@ class RestaurantDishValidationRules
     public static function viewDishesByRestaurantRules(): array
     {
         return [
-            'restaurant_id' => 'required|numeric',
+            'restaurant_id' => 'required|numeric|exists:restaurants,id',
         ];
     }
 }

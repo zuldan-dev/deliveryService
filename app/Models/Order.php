@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Events\OrderAssigned;
 use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\{Collection, Model, Builder};
+use Illuminate\Database\Eloquent\{Model, Builder};
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -70,36 +70,6 @@ class Order extends Model
     public function scopeLastDays(Builder $query, int $days): Builder
     {
         return $query->where('orders.created_at', '>=', now()->subDays($days));
-    }
-
-    /**
-     * @param int $days
-     * @return Collection
-     */
-    public static function averageCostOfOrders(int $days): Collection
-    {
-        return static::lastDays($days)
-            ->selectRaw('DATE(orders.created_at) as date')
-            ->selectRaw('AVG(dishes.price) as average_cost')
-            ->join('orders_dishes', 'orders.id', '=', 'orders_dishes.order_id')
-            ->join('dishes', 'orders_dishes.dish_id', '=', 'dishes.id')
-            ->groupBy('date')
-            ->get();
-    }
-
-    /**
-     * @param int $days
-     * @return Collection
-     */
-    public static function dailyAmountOfDrivers(int $days): Collection
-    {
-        return static::lastDays($days)
-            ->selectRaw('DATE(orders.created_at) as date')
-            ->selectRaw('drivers.name as driver_name')
-            ->selectRaw('SUM(drivers.revenue) as daily_revenue')
-            ->join('drivers', 'orders.driver_id', '=', 'drivers.id')
-            ->groupBy('date', 'driver_name')
-            ->get();
     }
 
     /**
